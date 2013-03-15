@@ -23,7 +23,18 @@
 using namespace std;
 using namespace cv;
 
-const int numFilesChars[]={35, 40, 42, 41, 42, 33, 30, 31, 49, 44, 30, 24, 21, 20, 34, 9, 10, 3, 11, 3, 15, 4, 9, 12, 10, 21, 18, 8, 15, 7};
+const int numFilesChars[] = {
+    35, 40, 42, 41, 42, 33, 30, 31, 49, 44, 
+    30, 24, 21, 20, 34,  9, 10,  3, 11,  3, 
+    15,  4,  9, 12, 10, 21, 18,  8, 15,  7
+};
+
+const int TWnumFilesChars[] = {
+     7,  8, 15, 17,  1,  9, 18, 18, 25, 14,
+     3,  4,  0,  5,  4,  1,  3,  1,  0,  2,
+     2,  1,  1,  0,  0,  2,  4,  2,  1,  6,
+     4,  1,  0,  0,  3,  2
+};
 
 int main ( int argc, char** argv )
 {
@@ -33,19 +44,13 @@ int main ( int argc, char** argv )
     char* path;
     
     //Check if user specify image to process
-    if(argc >= 1 )
-    {
-        path= argv[1];
-    
-    }else{
+    if(argc >= 1) {
+        path = argv[1];
+    }
+    else {
         cout << "Usage:\n" << argv[0] << " <path to chars folders files> \n";
         return 0;
     }        
-
-
-
-
-
 
     Mat classes;
     Mat trainingDataf5;
@@ -56,27 +61,28 @@ int main ( int argc, char** argv )
     vector<int> trainingLabels;
     OCR ocr;
 
-    for(int i=0; i< OCR::numCharacters; i++)
+    for(int i = 0; i< OCR::TWnumCharacters; i++)
     {
-        int numFiles=numFilesChars[i];
-        for(int j=0; j< numFiles; j++){
-            cout << "Character "<< OCR::strCharacters[i] << " file: " << j << "\n";
-            stringstream ss(stringstream::in | stringstream::out);
-            ss << path << OCR::strCharacters[i] << "/" << j << ".jpg";
-            Mat img=imread(ss.str(), 0);
-            Mat f5=ocr.features(img, 5);
-            Mat f10=ocr.features(img, 10);
-            Mat f15=ocr.features(img, 15);
-            Mat f20=ocr.features(img, 20);
+        int numFiles = TWnumFilesChars[i];
+        if (numFiles > 0) {
+            for(int j = 0; j < numFiles; j++) {
+                cout << "Character "<< OCR::TWstrCharacters[i] << " file: " << j << "\n";
+                stringstream ss(stringstream::in | stringstream::out);
+                ss << path << OCR::TWstrCharacters[i] << "/" << j << ".jpg";
+                Mat img = imread(ss.str(), 0);
+                Mat f5  = ocr.features(img, 5);
+                Mat f10 = ocr.features(img, 10);
+                Mat f15 = ocr.features(img, 15);
+                Mat f20 = ocr.features(img, 20);
 
-            trainingDataf5.push_back(f5);
-            trainingDataf10.push_back(f10);
-            trainingDataf15.push_back(f15);
-            trainingDataf20.push_back(f20);
-            trainingLabels.push_back(i);
+                trainingDataf5.push_back(f5);
+                trainingDataf10.push_back(f10);
+                trainingDataf15.push_back(f15);
+                trainingDataf20.push_back(f20);
+                trainingLabels.push_back(i);
+            }
         }
     }
-
     
     trainingDataf5.convertTo(trainingDataf5, CV_32FC1);
     trainingDataf10.convertTo(trainingDataf10, CV_32FC1);
@@ -84,7 +90,7 @@ int main ( int argc, char** argv )
     trainingDataf20.convertTo(trainingDataf20, CV_32FC1);
     Mat(trainingLabels).copyTo(classes);
 
-    FileStorage fs("OCR.xml", FileStorage::WRITE);
+    FileStorage fs("OCR_Taiwan.xml", FileStorage::WRITE);
     fs << "TrainingDataF5" << trainingDataf5;
     fs << "TrainingDataF10" << trainingDataf10;
     fs << "TrainingDataF15" << trainingDataf15;

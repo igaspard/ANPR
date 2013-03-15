@@ -12,39 +12,51 @@
 #include "DetectRegions.h"
 
 void DetectRegions::setFilename(string s) {
-        filename=s;
+    filename    = s;
 }
 
-DetectRegions::DetectRegions(){
-    showSteps=false;
-    saveRegions=false;
+//Spain  car plate size: 520x110 aspect 4,7272
+//Taiwan car plate size: 320x150 aspect 2.1334
+float country_plate_aspect[16] = {
+    4.7272, 2.1334, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000,
+    0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000
+};
+
+void DetectRegions::setCountry(unsigned char index) {
+    m_country   = index;
+    m_aspect    = country_plate_aspect[index];
 }
 
-bool DetectRegions::verifySizes(RotatedRect mr){
+void DetectRegions::setAspectTolerance(float tolerance) {
+    m_aspect_tolerance = tolerance;
+}
 
-    float error = 0.4;
-    //Spain car plate size: 52x11 aspect 4,7272
-    //Taiwan motocycle plate size: 250x140 aspect 1.7857
-    //Taiwan car       plate size: 320x150 aspect 2.1334
-    float aspect = 1.7857;
+DetectRegions::DetectRegions() {
+    showSteps   = false;
+    saveRegions = false;
+}
+
+bool DetectRegions::verifySizes(RotatedRect mr) {
+
     //Set a min and max area. All other patchs are discarded
-    int min= 15*aspect*15; // minimum area
-    int max= 125*aspect*125; // maximum area
+    int min     = 15  * m_aspect * 15; // minimum area
+    int max     = 125 * m_aspect * 125; // maximum area
+
     //Get only patchs that match to a respect ratio.
-    float rmin= aspect-aspect*error;
-    float rmax= aspect+aspect*error;
+    float rmin  = m_aspect - m_aspect * m_aspect_tolerance;
+    float rmax  = m_aspect + m_aspect * m_aspect_tolerance;
 
-    int area= mr.size.height * mr.size.width;
-    float r= (float)mr.size.width / (float)mr.size.height;
+    int area = mr.size.height * mr.size.width;
+    float r = (float)mr.size.width / (float)mr.size.height;
     if(r<1)
-        r= (float)mr.size.height / (float)mr.size.width;
+        r = (float)mr.size.height / (float)mr.size.width;
 
-    if(( area < min || area > max ) || ( r < rmin || r > rmax )){
+    if(( area < min || area > max ) || ( r < rmin || r > rmax )) {
         return false;
-    }else{
+    }
+    else {
         return true;
     }
-
 }
 
 Mat DetectRegions::histeq(Mat in)
@@ -111,7 +123,7 @@ vector<Plate> DetectRegions::segment(Mat input){
     //Remove patch that are no inside limits of aspect ratio and area.    
     while (itc!=contours.end()) {
         //Create bounding rect of object
-        RotatedRect mr= minAreaRect(Mat(*itc));
+        RotatedRect mr = minAreaRect(Mat(*itc));
         if( !verifySizes(mr)){
             itc= contours.erase(itc);
         }else{

@@ -34,15 +34,15 @@ int main ( int argc, char** argv )
     int imageHeight=33;
 
     //Check if user specify image to process
-    if(argc >= 5 )
-    {
-        numPlates= atoi(argv[1]);
-        numNoPlates= atoi(argv[2]);
-        path_Plates= argv[3];
-        path_NoPlates= argv[4];
-
-    }else{
-        cout << "Usage:\n" << argv[0] << " <num Plate Files> <num Non Plate Files> <path to plate folder files> <path to non plate files> \n";
+    if(argc >= 5) {
+        numPlates       = atoi(argv[1]);
+        numNoPlates     = atoi(argv[2]);
+        path_Plates     = argv[3];
+        path_NoPlates   = argv[4];
+    }
+    else {
+        cout << "Usage:\n" << argv[0];
+        cout << " <num Plate Files> <num Non Plate Files> <path to plate folder files> <path to non plate files> \n";
         return 0;
     }        
 
@@ -54,7 +54,6 @@ int main ( int argc, char** argv )
 
     for(int i=0; i< numPlates; i++)
     {
-
         stringstream ss(stringstream::in | stringstream::out);
         ss << path_Plates << i << ".jpg";
         Mat img=imread(ss.str(), 0);
@@ -71,7 +70,6 @@ int main ( int argc, char** argv )
         img= img.reshape(1, 1);
         trainingImages.push_back(img);
         trainingLabels.push_back(0);
-
     }
 
     Mat(trainingImages).copyTo(trainingData);
@@ -79,7 +77,7 @@ int main ( int argc, char** argv )
     trainingData.convertTo(trainingData, CV_32FC1);
     Mat(trainingLabels).copyTo(classes);
 
-    FileStorage fs("SVM.xml", FileStorage::WRITE);
+    FileStorage fs("SVM_Taiwan.xml", FileStorage::WRITE);
     fs << "TrainingData" << trainingData;
     fs << "classes" << classes;
     fs.release();
