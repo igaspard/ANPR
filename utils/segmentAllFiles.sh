@@ -1,6 +1,6 @@
 #!/bin/bash
-FILES=./images/*.jpg
-FILES1=./images/*.JPG
+FILES=./test/*.jpg
+FILES1=./test/*.JPG
 for f in $FILES
 do
     echo "Processing $f file..."

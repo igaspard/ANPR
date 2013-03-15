@@ -11,37 +11,51 @@
 
 #include "OCR.h"
 
-const char OCR::strCharacters[] = {'0','1','2','3','4','5','6','7','8','9','B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z'};
-const int OCR::numCharacters=30;
+const char OCR::strCharacters[] = {
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M',
+    'N', 'P', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z'
+};
 
-CharSegment::CharSegment(){}
-CharSegment::CharSegment(Mat i, Rect p){
+const int OCR::numCharacters = 30;
+
+const char OCR::TWstrCharacters[] = {
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+    'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+    'U', 'V', 'W', 'X', 'Y', 'Z'
+};
+
+const int OCR::TWnumCharacters = 36;
+
+CharSegment::CharSegment() {}
+CharSegment::CharSegment(Mat i, Rect p) {
     img=i;
     pos=p;
 }
 
-OCR::OCR(){
-    DEBUG=false;
-    trained=false;
-    saveSegments=false;
-    charSize=20;
+OCR::OCR() {
+    DEBUG       = false;
+    trained     = false;
+    saveSegments= false;
+    charSize    = 20;
 }
-OCR::OCR(string trainFile){
-    DEBUG=false;
-    trained=false;
-    saveSegments=false;
-    charSize=20;
+
+OCR::OCR(string trainFile) {
+    DEBUG       = false;
+    trained     = false;
+    saveSegments= false;
+    charSize    = 20;
 
     //Read file storage.
     FileStorage fs;
-    fs.open("OCR.xml", FileStorage::READ);
+    fs.open(trainFile, FileStorage::READ);
     Mat TrainingData;
     Mat Classes;
     fs["TrainingDataF15"] >> TrainingData;
     fs["classes"] >> Classes;
 
     train(TrainingData, Classes, 10);
-
 }
 
 Mat OCR::preprocessChar(Mat in){
@@ -62,36 +76,53 @@ Mat OCR::preprocessChar(Mat in){
     return out;
 }
 
-bool OCR::verifySizes(Mat r){
-    //Char sizes 45x77
-    float aspect=45.0f/77.0f;
-    float charAspect= (float)r.cols/(float)r.rows;
-    float error=0.35;
-    float minHeight=15;
-    float maxHeight=28;
+bool OCR::verifySizes(Mat r) {
+    float aspect        = 45.0f / 90.0f;
+    float charAspect    = (float)r.cols / (float)r.rows;
+    float error         = 0.35;
+    float minHeight     = 15;
+    float maxHeight     = 28;
     //We have a different aspect ratio for number 1, and it can be ~0.2
-    float minAspect=0.2;
-    float maxAspect=aspect+aspect*error;
+    float minAspect     = 0.2;
+    float maxAspect     = aspect + aspect * error;
     //area of pixels
-    float area=countNonZero(r);
+    float area          = countNonZero(r);
     //bb area
-    float bbArea=r.cols*r.rows;
+    float bbArea        = r.cols * r.rows;
     //% of pixel in area
-    float percPixels=area/bbArea;
+    float percPixels    = area / bbArea;
 
-    if(DEBUG)
-        cout << "Aspect: "<< aspect << " ["<< minAspect << "," << maxAspect << "] "  << "Area "<< percPixels <<" Char aspect " << charAspect  << " Height char "<< r.rows << "\n";
-    if(percPixels < 0.8 && charAspect > minAspect && charAspect < maxAspect && r.rows >= minHeight && r.rows < maxHeight)
+    //Test for taiwan number plate 0735-BA
+    minAspect = 0.4;
+    maxAspect = 1.4;
+
+    if(DEBUG) {
+        cout<<"Aspect: " <<aspect <<" ["<<minAspect <<"," <<maxAspect <<"] ";
+        cout<<"Area " <<percPixels <<" Char aspect " <<charAspect << " Height char "<< r.rows;
+    }
+
+    if(percPixels < 0.8 && charAspect > minAspect && charAspect < maxAspect &&
+    r.rows >= minHeight && r.rows < maxHeight) {
+        if (DEBUG) {
+            cout<<" TRUE\n";
+        }
         return true;
-    else
+    }
+    else {
+        if (DEBUG) {
+            cout<<" FALSE\n";
+        }
         return false;
-
+    }
 }
 
-vector<CharSegment> OCR::segment(Plate plate){
-    Mat input=plate.plateImg;
+vector<CharSegment> OCR::segment(Plate plate) {
+    
+    Mat input = plate.plateImg;
     vector<CharSegment> output;
+    
     //Threshold input image
+    //CV_THRESH_BINARY_INV turn the white to black, black to white.
     Mat img_threshold;
     threshold(input, img_threshold, 60, 255, CV_THRESH_BINARY_INV);
     if(DEBUG)
@@ -121,12 +152,12 @@ vector<CharSegment> OCR::segment(Plate plate){
     while (itc!=contours.end()) {
         
         //Create bounding rect of object
-        Rect mr= boundingRect(Mat(*itc));
+        Rect mr = boundingRect(Mat(*itc));
         rectangle(result, mr, Scalar(0,255,0));
         //Crop image
         Mat auxRoi(img_threshold, mr);
         if(verifySizes(auxRoi)){
-            auxRoi=preprocessChar(auxRoi);
+            auxRoi = preprocessChar(auxRoi);
             output.push_back(CharSegment(auxRoi, mr));
             rectangle(result, mr, Scalar(0,125,255));
         }
@@ -164,10 +195,8 @@ Mat OCR::ProjectedHistogram(Mat img, int t)
 
 Mat OCR::getVisualHistogram(Mat *hist, int type)
 {
-
     int size=100;
     Mat imHist;
-
 
     if(type==HORIZONTAL){
         imHist.create(Size(size,hist->cols), CV_8UC3);
@@ -214,10 +243,6 @@ Mat OCR::getVisualHistogram(Mat *hist, int type)
             line(imHist, pt3, pt4, CV_RGB(50,50,50),1,8,0);
 
         }
-
-
-
-
     }
 
     return imHist ;
@@ -256,10 +281,10 @@ void OCR::drawVisualFeatures(Mat character, Mat hhist, Mat vhist, Mat lowData){
     cvWaitKey(0);
 }
 
-Mat OCR::features(Mat in, int sizeData){
+Mat OCR::features(Mat in, int sizeData) {
     //Histogram features
-    Mat vhist=ProjectedHistogram(in,VERTICAL);
-    Mat hhist=ProjectedHistogram(in,HORIZONTAL);
+    Mat vhist = ProjectedHistogram(in,VERTICAL);
+    Mat hhist = ProjectedHistogram(in,HORIZONTAL);
     
     //Low data feature
     Mat lowData;
@@ -268,28 +293,26 @@ Mat OCR::features(Mat in, int sizeData){
     if(DEBUG)
         drawVisualFeatures(in, hhist, vhist, lowData);
     
-
-    
     //Last 10 is the number of moments components
-    int numCols=vhist.cols+hhist.cols+lowData.cols*lowData.cols;
+    int numCols = vhist.cols+hhist.cols+lowData.cols*lowData.cols;
     
-    Mat out=Mat::zeros(1,numCols,CV_32F);
+    Mat out = Mat::zeros(1,numCols,CV_32F);
     //Asign values to feature
-    int j=0;
-    for(int i=0; i<vhist.cols; i++)
+    int j = 0;
+    for(int i = 0; i<vhist.cols; i++)
     {
-        out.at<float>(j)=vhist.at<float>(i);
+        out.at<float>(j) = vhist.at<float>(i);
         j++;
     }
-    for(int i=0; i<hhist.cols; i++)
+    for(int i = 0; i<hhist.cols; i++)
     {
-        out.at<float>(j)=hhist.at<float>(i);
+        out.at<float>(j) = hhist.at<float>(i);
         j++;
     }
-    for(int x=0; x<lowData.cols; x++)
+    for(int x = 0; x<lowData.cols; x++)
     {
-        for(int y=0; y<lowData.rows; y++){
-            out.at<float>(j)=(float)lowData.at<unsigned char>(x,y);
+        for(int y = 0; y<lowData.rows; y++){
+            out.at<float>(j) = (float)lowData.at<unsigned char>(x,y);
             j++;
         }
     }
@@ -302,13 +325,15 @@ void OCR::train(Mat TrainData, Mat classes, int nlayers){
     Mat layers(1,3,CV_32SC1);
     layers.at<int>(0)= TrainData.cols;
     layers.at<int>(1)= nlayers;
-    layers.at<int>(2)= numCharacters;
+    //layers.at<int>(2)= numCharacters;
+    layers.at<int>(2)= TWnumCharacters;
     ann.create(layers, CvANN_MLP::SIGMOID_SYM, 1, 1);
 
     //Prepare trainClases
     //Create a mat with n trained data by m classes
     Mat trainClasses;
-    trainClasses.create( TrainData.rows, numCharacters, CV_32FC1 );
+    //trainClasses.create( TrainData.rows, numCharacters, CV_32FC1 );
+    trainClasses.create( TrainData.rows, TWnumCharacters, CV_32FC1 );
     for( int i = 0; i <  trainClasses.rows; i++ )
     {
         for( int k = 0; k < trainClasses.cols; k++ )
@@ -327,9 +352,10 @@ void OCR::train(Mat TrainData, Mat classes, int nlayers){
     trained=true;
 }
 
-int OCR::classify(Mat f){
-    int result=-1;
-    Mat output(1, numCharacters, CV_32FC1);
+int OCR::classify(Mat f) {
+    int result = -1;
+    //Mat output(1, numCharacters, CV_32FC1);
+    Mat output(1, TWnumCharacters, CV_32FC1);
     ann.predict(f, output);
     Point maxLoc;
     double maxVal;
@@ -339,7 +365,7 @@ int OCR::classify(Mat f){
     return maxLoc.x;
 }
 
-int OCR::classifyKnn(Mat f){
+int OCR::classifyKnn(Mat f) {
     int response = (int)knnClassifier.find_nearest( f, K );
     return response;
 }
@@ -349,24 +375,25 @@ void OCR::trainKnn(Mat trainSamples, Mat trainClasses, int k){
     knnClassifier.train( trainSamples, trainClasses, Mat(), false, K );
 }
 
-string OCR::run(Plate *input){
+string OCR::run(Plate *input) {
     
     //Segment chars of plate
     vector<CharSegment> segments=segment(*input);
 
-    for(int i=0; i<segments.size(); i++){
+    for(int i=0; i<segments.size(); i++) {
         //Preprocess each char for all images have same sizes
-        Mat ch=preprocessChar(segments[i].img);
+        Mat ch = preprocessChar(segments[i].img);
         if(saveSegments){
             stringstream ss(stringstream::in | stringstream::out);
             ss << "tmpChars/" << filename << "_" << i << ".jpg";
             imwrite(ss.str(),ch);
         }
         //For each segment Extract Features
-        Mat f=features(ch,15);
+        Mat f = features(ch,15);
         //For each segment feature Classify
-        int character=classify(f);
-        input->chars.push_back(strCharacters[character]);
+        int character = classify(f);
+        //input->chars.push_back(strCharacters[character]);
+        input->chars.push_back(TWstrCharacters[character]);
         input->charsPos.push_back(segments[i].pos);
     }
     return "-";//input->str();

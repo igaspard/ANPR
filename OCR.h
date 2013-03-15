@@ -55,6 +55,8 @@ class OCR{
         void trainKnn(Mat trainSamples, Mat trainClasses, int k);
         Mat features(Mat input, int size);
 
+        static const int    TWnumCharacters;
+        static const char   TWstrCharacters[];
     private:
         bool trained;
         vector<CharSegment> segment(Plate input);
