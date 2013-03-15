@@ -83,7 +83,7 @@ int main ( int argc, char** argv )
     //SVM for each plate region to get valid car plates
     //Read file storage.
     FileStorage fs;
-    fs.open("SVM.xml", FileStorage::READ);
+    fs.open("SVM_Taiwan.xml", FileStorage::READ);
     Mat SVM_TrainingData;
     Mat SVM_Classes;
     fs["TrainingData"] >> SVM_TrainingData;
@@ -122,7 +122,7 @@ int main ( int argc, char** argv )
     ocr.saveSegments    = false;
     ocr.DEBUG           = false;
     ocr.filename        = filename_whithoutExt;
-    for(int i=0; i< plates.size(); i++){
+    for(int i=0; i< plates.size(); i++) {
         Plate plate = plates[i];
         
         string plateNumber  = ocr.run(&plate);
@@ -132,11 +132,10 @@ int main ( int argc, char** argv )
         cout << "================================================\n";
         rectangle(input_image, plate.position, Scalar(0,0,200));
         putText(input_image, licensePlate, Point(plate.position.x, plate.position.y), CV_FONT_HERSHEY_SIMPLEX, 1, Scalar(0,0,200),2);
-        if(false){
+        if(false) {
             imshow("Plate Detected seg", plate.plateImg);
             cvWaitKey(0);
         }
-
     }
     
     imshow("Plate Detected", input_image);

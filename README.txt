@@ -1,18 +1,12 @@
 ******************************************************************************
 *   Automatic Number Plate Recognition using SVM and Neural Networks
 ******************************************************************************
+*   Author: Gaspard Shen
+*   Mail:   syuyang@gmail.com
+******************************************************************************
 *   Start my version of ANPR.
 *   Special for taiwan number plate.
 ******************************************************************************
-*   Ch5 of the book "Mastering OpenCV with Practical Computer Vision Projects"
-*   Copyright Packt Publishing 2012.
-*   http://www.packtpub.com/cool-projects-with-opencv/book
-******************************************************************************
-
-This code is sample code to understand how automatic license plate recognition (ANPR) works. It is not for production tasks.
-You can use this code as a sample & guide to create your own custom ANPR or OCR applications.
-
-
 ----------------------------------------------------------
 Building the project using CMake from the command-line:
 ----------------------------------------------------------

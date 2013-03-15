@@ -13,20 +13,12 @@
 
 const char OCR::strCharacters[] = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M',
-    'N', 'P', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z'
-};
-
-const int OCR::numCharacters = 30;
-
-const char OCR::TWstrCharacters[] = {
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
     'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
     'U', 'V', 'W', 'X', 'Y', 'Z'
 };
 
-const int OCR::TWnumCharacters = 36;
+const int OCR::numCharacters = 36;
 
 CharSegment::CharSegment() {}
 CharSegment::CharSegment(Mat i, Rect p) {
@@ -92,7 +84,7 @@ bool OCR::verifySizes(Mat r) {
     //% of pixel in area
     float percPixels    = area / bbArea;
 
-    //Test for taiwan number plate 0735-BA
+    //For the current data we got, we use this setting.
     minAspect = 0.4;
     maxAspect = 1.4;
 
@@ -323,17 +315,15 @@ Mat OCR::features(Mat in, int sizeData) {
 
 void OCR::train(Mat TrainData, Mat classes, int nlayers){
     Mat layers(1,3,CV_32SC1);
-    layers.at<int>(0)= TrainData.cols;
-    layers.at<int>(1)= nlayers;
-    //layers.at<int>(2)= numCharacters;
-    layers.at<int>(2)= TWnumCharacters;
+    layers.at<int>(0) = TrainData.cols;
+    layers.at<int>(1) = nlayers;
+    layers.at<int>(2) = numCharacters;
     ann.create(layers, CvANN_MLP::SIGMOID_SYM, 1, 1);
 
     //Prepare trainClases
     //Create a mat with n trained data by m classes
     Mat trainClasses;
-    //trainClasses.create( TrainData.rows, numCharacters, CV_32FC1 );
-    trainClasses.create( TrainData.rows, TWnumCharacters, CV_32FC1 );
+    trainClasses.create( TrainData.rows, numCharacters, CV_32FC1 );
     for( int i = 0; i <  trainClasses.rows; i++ )
     {
         for( int k = 0; k < trainClasses.cols; k++ )
@@ -354,8 +344,7 @@ void OCR::train(Mat TrainData, Mat classes, int nlayers){
 
 int OCR::classify(Mat f) {
     int result = -1;
-    //Mat output(1, numCharacters, CV_32FC1);
-    Mat output(1, TWnumCharacters, CV_32FC1);
+    Mat output(1, numCharacters, CV_32FC1);
     ann.predict(f, output);
     Point maxLoc;
     double maxVal;
@@ -392,8 +381,7 @@ string OCR::run(Plate *input) {
         Mat f = features(ch,15);
         //For each segment feature Classify
         int character = classify(f);
-        //input->chars.push_back(strCharacters[character]);
-        input->chars.push_back(TWstrCharacters[character]);
+        input->chars.push_back(strCharacters[character]);
         input->charsPos.push_back(segments[i].pos);
     }
     return "-";//input->str();
