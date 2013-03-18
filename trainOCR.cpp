@@ -24,6 +24,15 @@ using namespace std;
 using namespace cv;
 
 const int numFilesChars[] = {
+<<<<<<< HEAD
+=======
+    35, 40, 42, 41, 42, 33, 30, 31, 49, 44, 
+    30, 24, 21, 20, 34,  9, 10,  3, 11,  3, 
+    15,  4,  9, 12, 10, 21, 18,  8, 15,  7
+};
+
+const int TWnumFilesChars[] = {
+>>>>>>> 9a7be4d711a4ee84149d2099f1249c66a0a93bc0
      7,  8, 15, 17,  1,  9, 18, 18, 25, 14,
      3,  4,  0,  5,  4,  1,  3,  1,  0,  2,
      2,  1,  1,  0,  0,  2,  4,  2,  1,  6,
@@ -55,6 +64,7 @@ int main ( int argc, char** argv )
     vector<int> trainingLabels;
     OCR ocr;
 
+<<<<<<< HEAD
     for(int i = 0; i< OCR::numCharacters; i++)
     {
         int numFiles = numFilesChars[i];
@@ -63,6 +73,16 @@ int main ( int argc, char** argv )
                 cout << "Character "<< OCR::strCharacters[i] << " file: " << j << "\n";
                 stringstream ss(stringstream::in | stringstream::out);
                 ss << path << OCR::strCharacters[i] << "/" << j << ".jpg";
+=======
+    for(int i = 0; i< OCR::TWnumCharacters; i++)
+    {
+        int numFiles = TWnumFilesChars[i];
+        if (numFiles > 0) {
+            for(int j = 0; j < numFiles; j++) {
+                cout << "Character "<< OCR::TWstrCharacters[i] << " file: " << j << "\n";
+                stringstream ss(stringstream::in | stringstream::out);
+                ss << path << OCR::TWstrCharacters[i] << "/" << j << ".jpg";
+>>>>>>> 9a7be4d711a4ee84149d2099f1249c66a0a93bc0
                 Mat img = imread(ss.str(), 0);
                 Mat f5  = ocr.features(img, 5);
                 Mat f10 = ocr.features(img, 10);

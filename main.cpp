@@ -122,7 +122,11 @@ int main ( int argc, char** argv )
     ocr.saveSegments    = false;
     ocr.DEBUG           = false;
     ocr.filename        = filename_whithoutExt;
+<<<<<<< HEAD
     for(int i=0; i< plates.size(); i++) {
+=======
+    for(int i=0; i< plates.size(); i++){
+>>>>>>> 9a7be4d711a4ee84149d2099f1249c66a0a93bc0
         Plate plate = plates[i];
         
         string plateNumber  = ocr.run(&plate);
