@@ -1,14 +1,3 @@
-/*****************************************************************************
-*   Number Plate Recognition using SVM and Neural Networks
-******************************************************************************
-*   by David Millán Escrivá, 5th Dec 2012
-*   http://blog.damiles.com
-******************************************************************************
-*   Ch5 of the book "Mastering OpenCV with Practical Computer Vision Projects"
-*   Copyright Packt Publishing 2012.
-*   http://www.packtpub.com/cool-projects-with-opencv/book
-*****************************************************************************/
-
 #include "DetectRegions.h"
 
 void DetectRegions::setFilename(string s) {
@@ -209,7 +198,7 @@ vector<Plate> DetectRegions::segment(Mat input){
             getRectSubPix(img_rotated, rect_size, minRect.center, img_crop);
             
             Mat resultResized;
-            resultResized.create(33,144, CV_8UC3);
+            resultResized.create(REGION_HEIGHT, REGION_WIDTH, CV_8UC3);
             resize(img_crop, resultResized, resultResized.size(), 0, 0, INTER_CUBIC);
             //Equalize croped image
             Mat grayResult;

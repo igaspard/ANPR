@@ -1,16 +1,3 @@
-/*****************************************************************************
-*   Number Plate Recognition using SVM and Neural Networks
-******************************************************************************
-*   by David Millán Escrivá, 5th Dec 2012
-*   http://blog.damiles.com
-******************************************************************************
-*   Ch5 of the book "Mastering OpenCV with Practical Computer Vision Projects"
-*   Copyright Packt Publishing 2012.
-*   http://www.packtpub.com/cool-projects-with-opencv/book
-*****************************************************************************/
-
-// Main entry code OpenCV
-
 #include <cv.h>
 #include <highgui.h>
 #include <cvaux.h>
@@ -51,22 +38,36 @@ string getFilename(string s) {
 int main ( int argc, char** argv )
 {
     cout << "OpenCV Automatic Number Plate Recognition\n";
-    char* filename;
-    Mat input_image;
+    char*   filename;
+    Mat     input_image;
+    bool    bSaveRegions    = false;
+    bool    bDebug          = false;
 
     //Check if user specify image to process
-    if(argc >= 2)
-    {
-        filename = argv[1];
-        //load image  in gray level
-        input_image = imread(filename, 1);
-    }else{
+    if(argc >= 2) {
+        for (int i = 1; i < argc; i++) {
+            if (i == 1) {
+                //load image in gray level
+                filename = argv[1];
+                input_image = imread(filename, 1);
+            }
+            else {
+                if (!strcmp(argv[i], "-d")) {
+                    bDebug = true;
+                }
+                else if (!strcmp(argv[i], "-s")) {
+                    bSaveRegions = true;
+                }
+            }
+        }
+    }
+    else {
         printf("Use:\n\t%s image\n", argv[0]);
         return 0;
     }        
 
     string filename_whithoutExt=getFilename(filename);
-    cout << "working with file: "<< filename_whithoutExt << "\n";
+    cout << "Working with file: "<< filename_whithoutExt << "\n";
     //Detect posibles plate regions
     DetectRegions detectRegions;    
     detectRegions.setFilename(filename_whithoutExt);
@@ -76,14 +77,14 @@ int main ( int argc, char** argv )
     //detectRegions.setCountry(Spain);
     //detectRegions.setAspectTolerance(0.4);
 
-    detectRegions.saveRegions   = false;
-    detectRegions.showSteps     = true;
+    detectRegions.saveRegions   = bSaveRegions;
+    detectRegions.showSteps     = bDebug;
     vector<Plate> posible_regions = detectRegions.run( input_image );    
 
     //SVM for each plate region to get valid car plates
     //Read file storage.
     FileStorage fs;
-    fs.open("SVM_Taiwan.xml", FileStorage::READ);
+    fs.open("SVM_Ratio.xml", FileStorage::READ);
     Mat SVM_TrainingData;
     Mat SVM_Classes;
     fs["TrainingData"] >> SVM_TrainingData;
@@ -104,22 +105,21 @@ int main ( int argc, char** argv )
 
     //For each possible plate, classify with svm if it's a plate or no
     vector<Plate> plates;
-    for(int i=0; i< posible_regions.size(); i++)
-    {
+    for(int i=0; i< posible_regions.size(); i++) {
         Mat img = posible_regions[i].plateImg;
         Mat p = img.reshape(1, 1);
         p.convertTo(p, CV_32FC1);
 
         int response = (int)svmClassifier.predict( p );
-        if(response==1)
+        if(response == 1)
             plates.push_back(posible_regions[i]);
     }
-
     cout << "Num plates detected: " << plates.size() << "\n";
+
     //For each plate detected, recognize it with OCR
-    OCR ocr("OCR_Taiwan.xml");    
-    ocr.saveSegments    = false;
-    ocr.DEBUG           = false;
+    OCR ocr("OCR_Ratio.xml");    
+    ocr.saveSegments    = bSaveRegions;
+    ocr.DEBUG           = bDebug;
     ocr.filename        = filename_whithoutExt;
     for(int i=0; i< plates.size(); i++) {
         Plate plate = plates[i];

@@ -1,14 +1,3 @@
-/*****************************************************************************
-*   Number Plate Recognition using SVM and Neural Networks
-******************************************************************************
-*   by David Millán Escrivá, 5th Dec 2012
-*   http://blog.damiles.com
-******************************************************************************
-*   Ch5 of the book "Mastering OpenCV with Practical Computer Vision Projects"
-*   Copyright Packt Publishing 2012.
-*   http://www.packtpub.com/cool-projects-with-opencv/book
-*****************************************************************************/
-
 #ifndef DetectRegions_h
 #define DetectRegions_h
 
@@ -29,6 +18,9 @@ typedef enum {
     Spain   = 0, 
     Taiwan  = 1,
 } Country;
+
+#define REGION_WIDTH    160
+#define REGION_HEIGHT    75
 
 class DetectRegions{
     public:

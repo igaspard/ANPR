@@ -30,8 +30,8 @@ TARGET_LINK_LIBRARIES( evalOCR  ${OpenCV_LIBS} )
 
 SET(RESOURCES
 	README.txt
-	SVM.xml
-	OCR.xml
+	SVM_Ratio.xml
+	OCR_Ratio.xml
 	test
 )
 foreach(f ${RESOURCES})

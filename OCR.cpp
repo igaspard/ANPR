@@ -1,29 +1,18 @@
-/*****************************************************************************
-*   Number Plate Recognition using SVM and Neural Networks
-******************************************************************************
-*   by David Millán Escrivá, 5th Dec 2012
-*   http://blog.damiles.com
-******************************************************************************
-*   Ch5 of the book "Mastering OpenCV with Practical Computer Vision Projects"
-*   Copyright Packt Publishing 2012.
-*   http://www.packtpub.com/cool-projects-with-opencv/book
-*****************************************************************************/
-
 #include "OCR.h"
 
 const char OCR::strCharacters[] = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
     'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-    'U', 'V', 'W', 'X', 'Y', 'Z'
+    'U', 'V', 'W', 'X', 'Y', 'Z', '$'
 };
 
-const int OCR::numCharacters = 36;
+const int OCR::numCharacters = 37;
 
 CharSegment::CharSegment() {}
 CharSegment::CharSegment(Mat i, Rect p) {
-    img=i;
-    pos=p;
+    img = i;
+    pos = p;
 }
 
 OCR::OCR() {
@@ -50,20 +39,21 @@ OCR::OCR(string trainFile) {
     train(TrainingData, Classes, 10);
 }
 
-Mat OCR::preprocessChar(Mat in){
+Mat OCR::preprocessChar(Mat in) {
     //Remap image
-    int h=in.rows;
-    int w=in.cols;
-    Mat transformMat=Mat::eye(2,3,CV_32F);
-    int m=max(w,h);
-    transformMat.at<float>(0,2)=m/2 - w/2;
-    transformMat.at<float>(1,2)=m/2 - h/2;
+    int h = in.rows;
+    int w = in.cols;
+    Mat transformMat = Mat::eye(2,3,CV_32F);
+    int m = max(w,h);
+    transformMat.at<float>(0,2) = m/2 - w/2;
+    transformMat.at<float>(1,2) = m/2 - h/2;
 
     Mat warpImage(m,m, in.type());
-    warpAffine(in, warpImage, transformMat, warpImage.size(), INTER_LINEAR, BORDER_CONSTANT, Scalar(0) );
+    warpAffine(in, warpImage, transformMat, warpImage.size(), 
+            INTER_LINEAR, BORDER_CONSTANT, Scalar(0) );
 
     Mat out;
-    resize(warpImage, out, Size(charSize, charSize) ); 
+    resize(warpImage, out, Size(charSize*2, charSize*2) ); 
 
     return out;
 }
@@ -71,9 +61,9 @@ Mat OCR::preprocessChar(Mat in){
 bool OCR::verifySizes(Mat r) {
     float aspect        = 45.0f / 90.0f;
     float charAspect    = (float)r.cols / (float)r.rows;
-    float error         = 0.35;
-    float minHeight     = 15;
-    float maxHeight     = 28;
+    float error         = 0.2;
+    float minHeight     = 20;
+    float maxHeight     = 55;
     //We have a different aspect ratio for number 1, and it can be ~0.2
     float minAspect     = 0.2;
     float maxAspect     = aspect + aspect * error;
@@ -85,8 +75,8 @@ bool OCR::verifySizes(Mat r) {
     float percPixels    = area / bbArea;
 
     //For the current data we got, we use this setting.
-    minAspect = 0.4;
-    maxAspect = 1.4;
+    //minAspect = 0.4;
+    //maxAspect = 1.4;
 
     if(DEBUG) {
         cout<<"Aspect: " <<aspect <<" ["<<minAspect <<"," <<maxAspect <<"] ";
@@ -142,13 +132,12 @@ vector<CharSegment> OCR::segment(Plate plate) {
     
     //Remove patch that are no inside limits of aspect ratio and area.    
     while (itc!=contours.end()) {
-        
         //Create bounding rect of object
         Rect mr = boundingRect(Mat(*itc));
         rectangle(result, mr, Scalar(0,255,0));
         //Crop image
         Mat auxRoi(img_threshold, mr);
-        if(verifySizes(auxRoi)){
+        if(verifySizes(auxRoi)) {
             auxRoi = preprocessChar(auxRoi);
             output.push_back(CharSegment(auxRoi, mr));
             rectangle(result, mr, Scalar(0,125,255));
@@ -157,8 +146,6 @@ vector<CharSegment> OCR::segment(Plate plate) {
     }
     if(DEBUG)
         cout << "Num chars: " << output.size() << "\n";
-    
-
 
     if(DEBUG)
         imshow("SEgmented Chars", result);
@@ -170,7 +157,7 @@ Mat OCR::ProjectedHistogram(Mat img, int t)
     int sz=(t)?img.rows:img.cols;
     Mat mhist=Mat::zeros(1,sz,CV_32F);
 
-    for(int j=0; j<sz; j++){
+    for(int j=0; j<sz; j++) {
         Mat data=(t)?img.row(j):img.col(j);
         mhist.at<float>(j)=countNonZero(data);
     }
@@ -187,60 +174,58 @@ Mat OCR::ProjectedHistogram(Mat img, int t)
 
 Mat OCR::getVisualHistogram(Mat *hist, int type)
 {
-    int size=100;
+    int size = 100;
     Mat imHist;
 
-    if(type==HORIZONTAL){
+    if(type == HORIZONTAL) {
         imHist.create(Size(size,hist->cols), CV_8UC3);
     }else{
         imHist.create(Size(hist->cols, size), CV_8UC3);
     }
 
-    imHist=Scalar(55,55,55);
+    imHist = Scalar(55,55,55);
 
-    for(int i=0;i<hist->cols;i++){
-        float value=hist->at<float>(i);
-        int maxval=(int)(value*size);
+    for(int i = 0;i<hist->cols;i++) {
+        float value = hist->at<float>(i);
+        int maxval = (int)(value*size);
 
         Point pt1;
         Point pt2, pt3, pt4;
 
-        if(type==HORIZONTAL){
-            pt1.x=pt3.x=0;
-            pt2.x=pt4.x=maxval;
-            pt1.y=pt2.y=i;
-            pt3.y=pt4.y=i+1;
+        if(type == HORIZONTAL) {
+            pt1.x = pt3.x = 0;
+            pt2.x = pt4.x = maxval;
+            pt1.y = pt2.y = i;
+            pt3.y = pt4.y = i+1;
 
             line(imHist, pt1, pt2, CV_RGB(220,220,220),1,8,0);
             line(imHist, pt3, pt4, CV_RGB(34,34,34),1,8,0);
 
-            pt3.y=pt4.y=i+2;
+            pt3.y = pt4.y = i+2;
             line(imHist, pt3, pt4, CV_RGB(44,44,44),1,8,0);
-            pt3.y=pt4.y=i+3;
+            pt3.y = pt4.y = i+3;
             line(imHist, pt3, pt4, CV_RGB(50,50,50),1,8,0);
-        }else{
-
-                        pt1.x=pt2.x=i;
-                        pt3.x=pt4.x=i+1;
-                        pt1.y=pt3.y=100;
-                        pt2.y=pt4.y=100-maxval;
-
+        }
+        else {
+            pt1.x = pt2.x = i;
+            pt3.x = pt4.x = i+1;
+            pt1.y = pt3.y = 100;
+            pt2.y = pt4.y = 100-maxval;
 
             line(imHist, pt1, pt2, CV_RGB(220,220,220),1,8,0);
             line(imHist, pt3, pt4, CV_RGB(34,34,34),1,8,0);
 
-            pt3.x=pt4.x=i+2;
+            pt3.x = pt4.x = i+2;
             line(imHist, pt3, pt4, CV_RGB(44,44,44),1,8,0);
-            pt3.x=pt4.x=i+3;
+            pt3.x = pt4.x = i+3;
             line(imHist, pt3, pt4, CV_RGB(50,50,50),1,8,0);
-
         }
     }
 
     return imHist ;
 }
 
-void OCR::drawVisualFeatures(Mat character, Mat hhist, Mat vhist, Mat lowData){
+void OCR::drawVisualFeatures(Mat character, Mat hhist, Mat vhist, Mat lowData) {
     Mat img(121, 121, CV_8UC3, Scalar(0,0,0));
     Mat ch;
     Mat ld;
@@ -303,7 +288,7 @@ Mat OCR::features(Mat in, int sizeData) {
     }
     for(int x = 0; x<lowData.cols; x++)
     {
-        for(int y = 0; y<lowData.rows; y++){
+        for(int y = 0; y<lowData.rows; y++) {
             out.at<float>(j) = (float)lowData.at<unsigned char>(x,y);
             j++;
         }
@@ -313,7 +298,7 @@ Mat OCR::features(Mat in, int sizeData) {
     return out;
 }
 
-void OCR::train(Mat TrainData, Mat classes, int nlayers){
+void OCR::train(Mat TrainData, Mat classes, int nlayers) {
     Mat layers(1,3,CV_32SC1);
     layers.at<int>(0) = TrainData.cols;
     layers.at<int>(1) = nlayers;
@@ -339,7 +324,7 @@ void OCR::train(Mat TrainData, Mat classes, int nlayers){
     
     //Learn classifier
     ann.train( TrainData, trainClasses, weights );
-    trained=true;
+    trained = true;
 }
 
 int OCR::classify(Mat f) {
@@ -358,7 +343,7 @@ int OCR::classifyKnn(Mat f) {
     int response = (int)knnClassifier.find_nearest( f, K );
     return response;
 }
-void OCR::trainKnn(Mat trainSamples, Mat trainClasses, int k){
+void OCR::trainKnn(Mat trainSamples, Mat trainClasses, int k) {
     K=k;
     // learn classifier
     knnClassifier.train( trainSamples, trainClasses, Mat(), false, K );
@@ -367,12 +352,12 @@ void OCR::trainKnn(Mat trainSamples, Mat trainClasses, int k){
 string OCR::run(Plate *input) {
     
     //Segment chars of plate
-    vector<CharSegment> segments=segment(*input);
+    vector<CharSegment> segments = segment(*input);
 
-    for(int i=0; i<segments.size(); i++) {
+    for(int i = 0; i<segments.size(); i++) {
         //Preprocess each char for all images have same sizes
         Mat ch = preprocessChar(segments[i].img);
-        if(saveSegments){
+        if(saveSegments) {
             stringstream ss(stringstream::in | stringstream::out);
             ss << "tmpChars/" << filename << "_" << i << ".jpg";
             imwrite(ss.str(),ch);
@@ -381,8 +366,10 @@ string OCR::run(Plate *input) {
         Mat f = features(ch,15);
         //For each segment feature Classify
         int character = classify(f);
-        input->chars.push_back(strCharacters[character]);
-        input->charsPos.push_back(segments[i].pos);
+        if (strCharacters[character] != 0x24) {
+            input->chars.push_back(strCharacters[character]);
+            input->charsPos.push_back(segments[i].pos);
+        }
     }
     return "-";//input->str();
 }

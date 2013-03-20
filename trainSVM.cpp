@@ -1,22 +1,11 @@
-/*****************************************************************************
-*   Number Plate Recognition using SVM and Neural Networks
-******************************************************************************
-*   by David Millán Escrivá, 5th Dec 2012
-*   http://blog.damiles.com
-******************************************************************************
-*   Ch5 of the book "Mastering OpenCV with Practical Computer Vision Projects"
-*   Copyright Packt Publishing 2012.
-*   http://www.packtpub.com/cool-projects-with-opencv/book
-*****************************************************************************/
-
-// Main entry code OpenCV
-
 #include <cv.h>
 #include <highgui.h>
 #include <cvaux.h>
 
 #include <iostream>
 #include <vector>
+
+#include "DetectRegions.h"
 
 using namespace std;
 using namespace cv;
@@ -30,8 +19,8 @@ int main ( int argc, char** argv )
     char* path_NoPlates;
     int numPlates;
     int numNoPlates;
-    int imageWidth=144;
-    int imageHeight=33;
+    int imageWidth  = REGION_WIDTH;
+    int imageHeight = REGION_HEIGHT;
 
     //Check if user specify image to process
     if(argc >= 5) {
@@ -56,8 +45,8 @@ int main ( int argc, char** argv )
     {
         stringstream ss(stringstream::in | stringstream::out);
         ss << path_Plates << i << ".jpg";
-        Mat img=imread(ss.str(), 0);
-        img= img.reshape(1, 1);
+        Mat img = imread(ss.str(), 0);
+        img = img.reshape(1, 1);
         trainingImages.push_back(img);
         trainingLabels.push_back(1);
     }
@@ -66,8 +55,8 @@ int main ( int argc, char** argv )
     {
         stringstream ss(stringstream::in | stringstream::out);
         ss << path_NoPlates << i << ".jpg";
-        Mat img=imread(ss.str(), 0);
-        img= img.reshape(1, 1);
+        Mat img = imread(ss.str(), 0);
+        img = img.reshape(1, 1);
         trainingImages.push_back(img);
         trainingLabels.push_back(0);
     }
@@ -77,7 +66,7 @@ int main ( int argc, char** argv )
     trainingData.convertTo(trainingData, CV_32FC1);
     Mat(trainingLabels).copyTo(classes);
 
-    FileStorage fs("SVM_Taiwan.xml", FileStorage::WRITE);
+    FileStorage fs("SVM_ratio.xml", FileStorage::WRITE);
     fs << "TrainingData" << trainingData;
     fs << "classes" << classes;
     fs.release();

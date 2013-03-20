@@ -1,16 +1,3 @@
-/*****************************************************************************
-*   Number Plate Recognition using SVM and Neural Networks
-******************************************************************************
-*   by David Millán Escrivá, 5th Dec 2012
-*   http://blog.damiles.com
-******************************************************************************
-*   Ch5 of the book "Mastering OpenCV with Practical Computer Vision Projects"
-*   Copyright Packt Publishing 2012.
-*   http://www.packtpub.com/cool-projects-with-opencv/book
-*****************************************************************************/
-
-// Main entry code OpenCV
-
 #include <cv.h>
 #include <highgui.h>
 #include <cvaux.h>
@@ -23,11 +10,18 @@
 using namespace std;
 using namespace cv;
 
-const int numFilesChars[] = {
+/*const int numFilesChars[] = {
      7,  8, 15, 17,  1,  9, 18, 18, 25, 14,
      3,  4,  0,  5,  4,  1,  3,  1,  0,  2,
      2,  1,  1,  0,  0,  2,  4,  2,  1,  6,
      4,  1,  0,  0,  3,  2
+};*/
+
+const int numFilesChars[] = {
+    10,  8, 12, 15,  1, 10, 16, 17, 21, 13, 
+     4,  4,  0,  5,  4,  0,  3,  0,  0,  1,  
+     3,  1,  1,  0,  0,  2,  3,  2,  1,  5,  
+     4,  0,  0,  0,  4,  1,  5
 };
 
 int main ( int argc, char** argv )
@@ -60,9 +54,9 @@ int main ( int argc, char** argv )
         int numFiles = numFilesChars[i];
         if (numFiles > 0) {
             for(int j = 0; j < numFiles; j++) {
-                cout << "Character "<< OCR::strCharacters[i] << " file: " << j << "\n";
                 stringstream ss(stringstream::in | stringstream::out);
                 ss << path << OCR::strCharacters[i] << "/" << j << ".jpg";
+                cout << "Character "<< OCR::strCharacters[i] << " file: " << ss.str() << "\n";
                 Mat img = imread(ss.str(), 0);
                 Mat f5  = ocr.features(img, 5);
                 Mat f10 = ocr.features(img, 10);
@@ -84,7 +78,7 @@ int main ( int argc, char** argv )
     trainingDataf20.convertTo(trainingDataf20, CV_32FC1);
     Mat(trainingLabels).copyTo(classes);
 
-    FileStorage fs("OCR_Taiwan.xml", FileStorage::WRITE);
+    FileStorage fs("OCR_Ratio.xml", FileStorage::WRITE);
     fs << "TrainingDataF5" << trainingDataf5;
     fs << "TrainingDataF10" << trainingDataf10;
     fs << "TrainingDataF15" << trainingDataf15;
