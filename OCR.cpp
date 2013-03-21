@@ -370,6 +370,7 @@ string OCR::run(Plate *input) {
         Mat f = features(ch,15);
         //For each segment feature Classify
         int character = classify(f);
+        // 0x24 == $. $ was used to the non-number and non-alphabet
         if (strCharacters[character] != 0x24) {
             input->chars.push_back(strCharacters[character]);
             input->charsPos.push_back(segments[i].pos);
