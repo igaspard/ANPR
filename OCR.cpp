@@ -61,11 +61,11 @@ Mat OCR::preprocessChar(Mat in) {
 bool OCR::verifySizes(Mat r) {
     float aspect        = 45.0f / 90.0f;
     float charAspect    = (float)r.cols / (float)r.rows;
-    float error         = 0.2;
+    float error         = 0.3;
     float minHeight     = 20;
     float maxHeight     = 55;
-    //We have a different aspect ratio for number 1, and it can be ~0.2
-    float minAspect     = 0.2;
+    //We have a different aspect ratio for number 1, and it can be ~0.15
+    float minAspect     = 0.15;
     float maxAspect     = aspect + aspect * error;
     //area of pixels
     float area          = countNonZero(r);
@@ -74,27 +74,31 @@ bool OCR::verifySizes(Mat r) {
     //% of pixel in area
     float percPixels    = area / bbArea;
 
-    //For the current data we got, we use this setting.
-    //minAspect = 0.4;
-    //maxAspect = 1.4;
-
     if(DEBUG) {
-        cout<<"Aspect: " <<aspect <<" ["<<minAspect <<"," <<maxAspect <<"] ";
-        cout<<"Area " <<percPixels <<" Char aspect " <<charAspect << " Height char "<< r.rows;
+        cout<<"Aspect: " <<aspect <<" ["<<minAspect <<", " <<maxAspect <<"], ";
+        cout<<"Area: " <<setw(9) <<percPixels <<", ";
+        cout<<"Char aspect: " <<setw(9) <<charAspect <<", ";
+        cout<<"Height: " <<setw(3) <<r.rows <<" ";
+        cout<<"Width: " <<setw(3) <<r.cols;
     }
 
-    if(percPixels < 0.8 && charAspect > minAspect && charAspect < maxAspect &&
-    r.rows >= minHeight && r.rows < maxHeight) {
-        if (DEBUG) {
-            cout<<" TRUE\n";
-        }
-        return true;
+    if (r.rows >= minHeight && r.rows < maxHeight) {
+         if (percPixels < 0.8 && charAspect >= minAspect 
+            && charAspect <= maxAspect) {
+             if (DEBUG)
+                cout<<"  YES\n";
+             return true;
+         }
+         else {
+             if (DEBUG)
+                cout<<" NO\n";
+             return false;
+         }
     }
     else {
-        if (DEBUG) {
-            cout<<" FALSE\n";
-        }
-        return false;
+         if (DEBUG)
+            cout<<" NO\n";
+         return false;
     }
 }
 
