@@ -1,5 +1,5 @@
 ******************************************************************************
-*   Automatic Number Plate Recognition using SVM and Neural Networks
+*   Number Plate Recognition
 ******************************************************************************
 *   Author: Gaspard Shen
 *   Mail:   syuyang@gmail.com
