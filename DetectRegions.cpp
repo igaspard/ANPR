@@ -35,15 +35,30 @@ bool DetectRegions::verifySizes(RotatedRect mr) {
     float rmin  = m_aspect - m_aspect * m_aspect_tolerance;
     float rmax  = m_aspect + m_aspect * m_aspect_tolerance;
 
-    int area = mr.size.height * mr.size.width;
-    float r = (float)mr.size.width / (float)mr.size.height;
-    if(r<1)
+    int area    = mr.size.height * mr.size.width;
+    float r     = (float)mr.size.width / (float)mr.size.height;
+
+    if(r < 1)
         r = (float)mr.size.height / (float)mr.size.width;
 
     if(( area < min || area > max ) || ( r < rmin || r > rmax )) {
+        if (0) {
+            cout<<"Area Max/Min: " <<max << " / " <<min <<" ";
+            cout<<"area: " <<setw(8) <<area;
+            cout<<" ("<<setw(8) <<mr.size.width <<", "<<setw(8) <<mr.size.height <<")";
+            cout<<", Ratio Max/Min: "<<rmax <<" / " << rmin;
+            cout<<" ratio: " <<setw(8) <<r <<"  NO" <<endl;
+        }
         return false;
     }
     else {
+        if (0) {
+            cout<<"Area Max/Min: " <<max << " / " <<min <<" ";
+            cout<<"area: " <<setw(8) <<area;
+            cout<<" ("<<setw(8) <<mr.size.width <<", "<<setw(8) <<mr.size.height <<")";
+            cout<<", Ratio Max/Min: "<<rmax <<" / " << rmin;
+            cout<<"ratio: " <<setw(8) <<r <<" YES" <<endl;
+        }
         return true;
     }
 }
@@ -51,7 +66,7 @@ bool DetectRegions::verifySizes(RotatedRect mr) {
 Mat DetectRegions::histeq(Mat in)
 {
     Mat out(in.size(), in.type());
-    if(in.channels()==3){
+    if(in.channels()==3) {
         Mat hsv;
         vector<Mat> hsvSplit;
         cvtColor(in, hsv, CV_BGR2HSV);
@@ -59,7 +74,7 @@ Mat DetectRegions::histeq(Mat in)
         equalizeHist(hsvSplit[2], hsvSplit[2]);
         merge(hsvSplit, hsv);
         cvtColor(hsv, out, CV_HSV2BGR);
-    }else if(in.channels()==1){
+    }else if(in.channels()==1) {
         equalizeHist(in, out);
     }
 
@@ -67,7 +82,7 @@ Mat DetectRegions::histeq(Mat in)
 
 }
 
-vector<Plate> DetectRegions::segment(Mat input){
+vector<Plate> DetectRegions::segment(Mat input) {
     vector<Plate> output;
 
     //convert image to gray
@@ -75,7 +90,7 @@ vector<Plate> DetectRegions::segment(Mat input){
     cvtColor(input, img_gray, CV_BGR2GRAY);
     blur(img_gray, img_gray, Size(5,5));    
 
-    //Finde vertical lines. Car plates have high density of vertical lines
+    //Find vertical lines. Car plates have high density of vertical lines
     Mat img_sobel;
     //void Sobel(InputArray src, OutputArray dst, int ddepth, int xorder,
     //int yorder, int ksize=3, double scale=1, double delta=0, int
@@ -94,7 +109,7 @@ vector<Plate> DetectRegions::segment(Mat input){
     //Remove the blank spaces between each vertical edge line, 
     //and connect all regions that have high number of edges.
     Mat element = getStructuringElement(MORPH_RECT, Size(17, 3) );
-    morphologyEx(img_threshold, img_threshold, CV_MOP_CLOSE, element);
+    morphologyEx(img_threshold, img_threshold, CV_MOP_CLOSE, close_element);
     if(showSteps)
         imshow("Close", img_threshold);
 
@@ -113,7 +128,7 @@ vector<Plate> DetectRegions::segment(Mat input){
     while (itc!=contours.end()) {
         //Create bounding rect of object
         RotatedRect mr = minAreaRect(Mat(*itc));
-        if( !verifySizes(mr)){
+        if( !verifySizes(mr)) {
             itc= contours.erase(itc);
         }else{
             ++itc;
@@ -129,38 +144,45 @@ vector<Plate> DetectRegions::segment(Mat input){
             cv::Scalar(255,0,0), // in blue
             1); // with a thickness of 1
 
-    for(int i=0; i< rects.size(); i++){
+    for(int i=0; i< rects.size(); i++) {
 
         //For better rect cropping for each posible box
         //Make floodfill algorithm because the plate has white background
         //And then we can retrieve more clearly the contour box
         circle(result, rects[i].center, 3, Scalar(0,255,0), -1);
         //get the min size between width and height
-        float minSize=(rects[i].size.width < rects[i].size.height)?rects[i].size.width:rects[i].size.height;
-        minSize=minSize-minSize*0.5;
+        float minSize = (rects[i].size.width < rects[i].size.height) ? rects[i].size.width : rects[i].size.height;
+        minSize = minSize - minSize * 0.5;
         //initialize rand and get 5 points around center for floodfill algorithm
         srand ( time(NULL) );
+        
         //Initialize floodfill parameters and variables
         Mat mask;
         mask.create(input.rows + 2, input.cols + 2, CV_8UC1);
-        mask= Scalar::all(0);
-        int loDiff = 30;
-        int upDiff = 30;
+        mask = Scalar::all(0);
+
+        int loDiff       = 30;
+        int upDiff       = 30;
         int connectivity = 4;
-        int newMaskVal = 255;
-        int NumSeeds = 10;
+        int newMaskVal   = 255;
+        int NumSeeds     = 10;
         Rect ccomp;
-        int flags = connectivity + (newMaskVal << 8 ) + CV_FLOODFILL_FIXED_RANGE + CV_FLOODFILL_MASK_ONLY;
-        for(int j=0; j<NumSeeds; j++){
+        int flags        = connectivity + (newMaskVal << 8 ) + 
+        CV_FLOODFILL_FIXED_RANGE + CV_FLOODFILL_MASK_ONLY;
+        for(int j = 0; j<NumSeeds; j++) {
             Point seed;
-            seed.x=rects[i].center.x+rand()%(int)minSize-(minSize/2);
-            seed.y=rects[i].center.y+rand()%(int)minSize-(minSize/2);
+            seed.x = rects[i].center.x + rand() % (int)minSize - (minSize/2);
+            seed.y = rects[i].center.y + rand() % (int)minSize - (minSize/2);
             circle(result, seed, 1, Scalar(0,255,255), -1);
-            int area = floodFill(input, mask, seed, Scalar(255,0,0), &ccomp, Scalar(loDiff, loDiff, loDiff), Scalar(upDiff, upDiff, upDiff), flags);
+            int area = floodFill(input, mask, seed, Scalar(255,0,0), &ccomp, 
+            Scalar(loDiff, loDiff, loDiff), Scalar(upDiff, upDiff, upDiff), flags);
+            if(showSteps)
+                imshow("MASK", mask);
+            cvWaitKey(0);
         }
         if(showSteps)
             imshow("MASK", mask);
-        //cvWaitKey(0);
+        cvWaitKey(0);
 
         //Check new floodfill mask match for a correct patch.
         //Get all points detected for get Minimal rotated Rect
@@ -173,7 +195,7 @@ vector<Plate> DetectRegions::segment(Mat input){
 
         RotatedRect minRect = minAreaRect(pointsInterest);
 
-        if(verifySizes(minRect)){
+        if(verifySizes(minRect)) {
             // rotated rectangle drawing 
             Point2f rect_points[4]; minRect.points( rect_points );
             for( int j = 0; j < 4; j++ )
@@ -205,7 +227,7 @@ vector<Plate> DetectRegions::segment(Mat input){
             cvtColor(resultResized, grayResult, CV_BGR2GRAY); 
             blur(grayResult, grayResult, Size(3,3));
             grayResult=histeq(grayResult);
-            if(saveRegions){ 
+            if(saveRegions) { 
                 stringstream ss(stringstream::in | stringstream::out);
                 ss << "tmp/" << filename << "_" << i << ".jpg";
                 imwrite(ss.str(), grayResult);
@@ -219,7 +241,7 @@ vector<Plate> DetectRegions::segment(Mat input){
     return output;
 }
 
-vector<Plate> DetectRegions::run(Mat input){
+vector<Plate> DetectRegions::run(Mat input) {
     
     //Segment image by white 
     vector<Plate> tmp=segment(input);

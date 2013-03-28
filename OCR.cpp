@@ -63,7 +63,7 @@ bool OCR::verifySizes(Mat r) {
     float charAspect    = (float)r.cols / (float)r.rows;
     float error         = 0.3;
     float minHeight     = 20;
-    float maxHeight     = 55;
+    float maxHeight     = 65;
     //We have a different aspect ratio for number 1, and it can be ~0.15
     float minAspect     = 0.15;
     float maxAspect     = aspect + aspect * error;
@@ -86,12 +86,12 @@ bool OCR::verifySizes(Mat r) {
          if (percPixels < 0.8 && charAspect >= minAspect 
             && charAspect <= maxAspect) {
              if (DEBUG)
-                cout<<"  YES\n";
+                cout<<" YES\n";
              return true;
          }
          else {
              if (DEBUG)
-                cout<<" NO\n";
+                cout<<"  NO\n";
              return false;
          }
     }

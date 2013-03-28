@@ -66,7 +66,7 @@ int main ( int argc, char** argv )
     trainingData.convertTo(trainingData, CV_32FC1);
     Mat(trainingLabels).copyTo(classes);
 
-    FileStorage fs("SVM_ratio.xml", FileStorage::WRITE);
+    FileStorage fs("SVM_Ratio.xml", FileStorage::WRITE);
     fs << "TrainingData" << trainingData;
     fs << "classes" << classes;
     fs.release();

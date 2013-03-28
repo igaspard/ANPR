@@ -73,7 +73,7 @@ int main ( int argc, char** argv )
     detectRegions.setFilename(filename_whithoutExt);
     
     detectRegions.setCountry(Taiwan);
-    detectRegions.setAspectTolerance(0.2);
+    detectRegions.setAspectTolerance(0.5);
     //detectRegions.setCountry(Spain);
     //detectRegions.setAspectTolerance(0.4);
 
@@ -114,7 +114,8 @@ int main ( int argc, char** argv )
         if(response == 1)
             plates.push_back(posible_regions[i]);
     }
-    cout << "Num plates detected: " << plates.size() << "\n";
+    cout<<"Num plates detected: " <<plates.size();
+    cout<<" (Find "<< posible_regions.size() <<" regions)" <<endl;
 
     //For each plate detected, recognize it with OCR
     OCR ocr("OCR_Ratio.xml");    
