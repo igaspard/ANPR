@@ -109,7 +109,7 @@ vector<Plate> DetectRegions::segment(Mat input) {
     //Remove the blank spaces between each vertical edge line, 
     //and connect all regions that have high number of edges.
     Mat element = getStructuringElement(MORPH_RECT, Size(17, 3) );
-    morphologyEx(img_threshold, img_threshold, CV_MOP_CLOSE, close_element);
+    morphologyEx(img_threshold, img_threshold, CV_MOP_CLOSE, element);
     if(showSteps)
         imshow("Close", img_threshold);
 
@@ -176,13 +176,10 @@ vector<Plate> DetectRegions::segment(Mat input) {
             circle(result, seed, 1, Scalar(0,255,255), -1);
             int area = floodFill(input, mask, seed, Scalar(255,0,0), &ccomp, 
             Scalar(loDiff, loDiff, loDiff), Scalar(upDiff, upDiff, upDiff), flags);
-            if(showSteps)
-                imshow("MASK", mask);
-            cvWaitKey(0);
         }
         if(showSteps)
             imshow("MASK", mask);
-        cvWaitKey(0);
+        //cvWaitKey(0);
 
         //Check new floodfill mask match for a correct patch.
         //Get all points detected for get Minimal rotated Rect
